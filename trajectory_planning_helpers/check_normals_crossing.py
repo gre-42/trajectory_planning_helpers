@@ -1,6 +1,10 @@
 import numpy as np
 
 
+def _cross2d(a: np.ndarray, b: np.ndarray) -> np.ndarray:
+    return np.abs(1 - np.abs(np.sum(a * b, axis=1)))
+
+
 def check_normals_crossing(track: np.ndarray,
                            normvec_normalized: np.ndarray,
                            horizon: int = 10) -> bool:
@@ -54,7 +58,7 @@ def check_normals_crossing(track: np.ndarray,
         idx_neighbours = np.array(idx_neighbours)
 
         # remove indices of normal vectors that are collinear to the current index
-        is_collinear_b = np.isclose(np.cross(normvec_normalized[idx], normvec_normalized[idx_neighbours]), 0.0)
+        is_collinear_b = np.isclose(_cross2d(normvec_normalized[idx], normvec_normalized[idx_neighbours]), 0.0)
         idx_neighbours_rel = idx_neighbours[np.nonzero(np.invert(is_collinear_b))[0]]
 
         # check crossings solving an LES

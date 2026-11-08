@@ -95,7 +95,7 @@ def spline_approximation(track: np.ndarray,
         closest_t_glob_cl[i] = optimize.fmin(dist_to_p,
                                              x0=t_glob_guess_cl[i],
                                              args=(tck_cl, track_cl[i, :2]),
-                                             disp=False)
+                                             disp=False)[0]
 
         # evaluate B spline on the basis of t_glob to obtain the closest point
         closest_point_cl[i] = interpolate.splev(closest_t_glob_cl[i], tck_cl)
@@ -142,7 +142,9 @@ def spline_approximation(track: np.ndarray,
 
 # return distance from point p to a point on the spline at spline parameter t_glob
 def dist_to_p(t_glob: np.ndarray, path: list, p: np.ndarray):
-    s = interpolate.splev(t_glob, path)
+    if t_glob.shape != (1,):
+        raise ValueError('t_glob must be an array of length 1')
+    s = interpolate.splev(t_glob[0], path)
     return spatial.distance.euclidean(p, s)
 
 
