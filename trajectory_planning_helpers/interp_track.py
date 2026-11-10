@@ -3,7 +3,8 @@ import math
 
 
 def interp_track(track: np.ndarray,
-                 stepsize: float) -> np.ndarray:
+                 stepsize: float,
+                 closed: bool) -> np.ndarray:
     """
     author:
     Alexander Heilmeier
@@ -31,7 +32,10 @@ def interp_track(track: np.ndarray,
     # ------------------------------------------------------------------------------------------------------------------
 
     # create closed track
-    track_cl = np.vstack((track, track[0]))
+    if closed:
+        track_cl = np.vstack((track, track[0]))
+    else:
+        track_cl = track
 
     # calculate element lengths (euclidian distance)
     el_lengths_cl = np.sqrt(np.sum(np.power(np.diff(track_cl[:, :2], axis=0), 2), axis=1))

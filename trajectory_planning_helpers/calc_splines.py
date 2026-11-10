@@ -64,8 +64,13 @@ def calc_splines(path: np.ndarray,
         closed = False
 
     # check inputs
-    if not closed and (psi_s is None or psi_e is None):
-        raise RuntimeError("Headings must be provided for unclosed spline calculation!")
+    if not closed:
+        if psi_s is None:
+            v = path[1] - path[0]
+            psi_s = math.atan2(v[1], v[0]) - math.pi / 2
+        if psi_e is None:
+            v = path[-1] - path[-2]
+            psi_e = math.atan2(v[1], v[0]) - math.pi / 2
 
     if el_lengths is not None and path.shape[0] != el_lengths.size + 1:
         raise RuntimeError("el_lengths input must be one element smaller than path input!")

@@ -5,7 +5,8 @@ import trajectory_planning_helpers as tph
 def create_raceline(refline: np.ndarray,
                     normvectors: np.ndarray,
                     alpha: np.ndarray,
-                    stepsize_interp: float) -> tuple:
+                    stepsize_interp: float,
+                    closed: bool) -> tuple:
     """
     author:
     Alexander Heilmeier
@@ -50,7 +51,10 @@ def create_raceline(refline: np.ndarray,
     raceline = refline + np.expand_dims(alpha, 1) * normvectors
 
     # calculate new splines on the basis of the raceline
-    raceline_cl = np.vstack((raceline, raceline[0]))
+    if closed:
+        raceline_cl = np.vstack((raceline, raceline[0]))
+    else:
+        raceline_cl = raceline
 
     coeffs_x_raceline, coeffs_y_raceline, A_raceline, normvectors_raceline = tph.calc_splines.\
         calc_splines(path=raceline_cl,

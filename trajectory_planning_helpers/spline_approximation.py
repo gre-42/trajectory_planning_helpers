@@ -11,7 +11,8 @@ def spline_approximation(track: np.ndarray,
                          s_reg: int = 10,
                          stepsize_prep: float = 1.0,
                          stepsize_reg: float = 3.0,
-                         debug: bool = False) -> np.ndarray:
+                         debug: bool = False,
+                         closed: bool = True) -> np.ndarray:
     """
     author:
     Fabian Christ
@@ -50,15 +51,22 @@ def spline_approximation(track: np.ndarray,
     # ------------------------------------------------------------------------------------------------------------------
 
     track_interp = tph.interp_track.interp_track(track=track,
-                                                 stepsize=stepsize_prep)
-    track_interp_cl = np.vstack((track_interp, track_interp[0]))
+                                                 stepsize=stepsize_prep,
+                                                 closed=closed)
+    if closed:
+        track_interp_cl = np.vstack((track_interp, track_interp[0]))
+    else:
+        track_interp_cl = track_interp
 
     # ------------------------------------------------------------------------------------------------------------------
     # SPLINE APPROXIMATION / PATH SMOOTHING ----------------------------------------------------------------------------
     # ------------------------------------------------------------------------------------------------------------------
 
     # create closed track (original track)
-    track_cl = np.vstack((track, track[0]))
+    if closed:
+        track_cl = np.vstack((track, track[0]))
+    else:
+        track_cl = track
     no_points_track_cl = track_cl.shape[0]
     el_lengths_cl = np.sqrt(np.sum(np.power(np.diff(track_cl[:, :2], axis=0), 2), axis=1))
     dists_cum_cl = np.cumsum(el_lengths_cl)
@@ -69,7 +77,7 @@ def spline_approximation(track: np.ndarray,
     tck_cl, t_glob_cl = interpolate.splprep([track_interp_cl[:, 0], track_interp_cl[:, 1]],
                                             k=k_reg,
                                             s=s_reg,
-                                            per=1)[:2]
+                                            per=int(closed))[:2]
 
     # calculate total length of smooth approximating spline based on euclidian distance with points at every 0.25m
     no_points_lencalc_cl = math.ceil(dists_cum_cl[-1]) * 4
@@ -109,14 +117,18 @@ def spline_approximation(track: np.ndarray,
               % (float(np.mean(dists_cl)), float(np.amax(np.abs(dists_cl)))))
 
     # get side of smoothed track compared to the inserted track
-    sides = np.zeros(no_points_track_cl - 1)
+    sides = np.zeros(no_points_track_cl - int(closed))
 
-    for i in range(no_points_track_cl - 1):
-        sides[i] = tph.side_of_line.side_of_line(a=track_cl[i, :2],
-                                                 b=track_cl[i+1, :2],
+    for i in range(no_points_track_cl - int(closed)):
+        j = min(i, no_points_track_cl - 2)
+        sides[i] = tph.side_of_line.side_of_line(a=track_cl[j, :2],
+                                                 b=track_cl[j+1, :2],
                                                  z=closest_point_cl[i])
 
-    sides_cl = np.hstack((sides, sides[0]))
+    if closed:
+        sides_cl = np.hstack((sides, sides[0]))
+    else:
+        sides_cl = sides
 
     # calculate new track widths on the basis of the new reference line, but not interpolated to new stepsize yet
     w_tr_right_new_cl = track_cl[:, 2] + sides_cl * dists_cl
