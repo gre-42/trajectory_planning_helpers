@@ -7,7 +7,8 @@ def _cross2d(a: np.ndarray, b: np.ndarray) -> np.ndarray:
 
 def check_normals_crossing(track: np.ndarray,
                            normvec_normalized: np.ndarray,
-                           horizon: int = 10) -> bool:
+                           horizon: int = 10,
+                           closed: bool = True) -> bool:
     """
     author:
     Alexander Heilmeier
@@ -34,6 +35,8 @@ def check_normals_crossing(track: np.ndarray,
     """
 
     # check input
+    if track.shape[0] != normvec_normalized.shape[0]:
+        raise RuntimeError('Number of points does not match number of normals')
     no_points = track.shape[0]
 
     if horizon >= no_points:
@@ -47,14 +50,22 @@ def check_normals_crossing(track: np.ndarray,
     # initialization
     les_mat = np.zeros((2, 2))
     idx_list = list(range(0, no_points))
-    idx_list = idx_list[-horizon:] + idx_list + idx_list[:horizon]
+
+    if closed:
+        idx_list = idx_list[-horizon:] + idx_list + idx_list[:horizon]
 
     # loop through all points of the track to check for crossings in their neighbourhoods
     for idx in range(no_points):
 
         # determine indices of points in the neighbourhood of the current index
-        idx_neighbours = idx_list[idx:idx + 2 * horizon + 1]
-        del idx_neighbours[horizon]
+        if closed:
+            idx_neighbours = idx_list[idx:idx + 2 * horizon + 1]
+            del idx_neighbours[horizon]
+        else:
+            start_idx = max(0, idx - horizon)
+            end_idx = min(no_points, idx + horizon + 1)
+            idx_neighbours = idx_list[start_idx:idx] + idx_list[idx + 1:end_idx]
+
         idx_neighbours = np.array(idx_neighbours)
 
         # remove indices of normal vectors that are collinear to the current index

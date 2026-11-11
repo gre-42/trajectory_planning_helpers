@@ -194,6 +194,13 @@ def calc_splines(path: np.ndarray,
     # cubic splines is relevant for the heading)
     normvec = np.stack((coeffs_y[:, 1], -coeffs_x[:, 1]), axis=1)
 
+    # if track is unclosed, calculate normal vector at the end of the last spline (t = 1.0)
+    if not closed:
+        dx_end = coeffs_x[-1, 1] + 2 * coeffs_x[-1, 2] + 3 * coeffs_x[-1, 3]
+        dy_end = coeffs_y[-1, 1] + 2 * coeffs_y[-1, 2] + 3 * coeffs_y[-1, 3]
+        normvec_end = np.array([[dy_end, -dx_end]])
+        normvec = np.vstack((normvec, normvec_end))
+
     # normalize normal vectors
     norm_factors = 1.0 / np.sqrt(np.sum(np.power(normvec, 2), axis=1))
     normvec_normalized = np.expand_dims(norm_factors, axis=1) * normvec
